@@ -19,6 +19,7 @@ from .models import (
 from .agents.graph import TravelGraph
 from .rag.chroma_client import ChromaClient
 from .rag.retriever import TravelRetriever
+from .rag.destination_loader import load_destination_documents
 from .services.notifications import NotificationService
 
 app = FastAPI(
@@ -39,6 +40,16 @@ app.add_middleware(
 # Initialize services
 travel_graph = TravelGraph()
 bookings_db: Dict[str, Booking] = {}
+
+
+@app.on_event("startup")
+async def startup_event():
+    """Load destination knowledge on startup."""
+    try:
+        chroma = ChromaClient()
+        load_destination_documents(chroma)
+    except Exception as e:
+        print(f"Warning: Could not load destination documents: {e}")
 
 
 def get_chroma_client(settings: Settings = Depends(get_settings)) -> ChromaClient:

@@ -2,6 +2,7 @@ import chromadb
 from chromadb.config import Settings
 from typing import Optional
 import logging
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -16,17 +17,28 @@ class ChromaClient:
             cls._instance._initialize(host, port)
         return cls._instance
 
-    def _initialize(self, host: str, port: int):
-        try:
-            self._client = chromadb.HttpClient(
-                host=host,
-                port=port,
-                settings=Settings(anonymized_telemetry=False),
-            )
-            logger.info(f"Connected to ChromaDB at {host}:{port}")
-        except Exception as e:
-            logger.warning(f"Could not connect to ChromaDB: {e}. Using in-memory client.")
-            self._client = chromadb.Client()
+    def _initialize(self, host: str, port: int, max_retries: int = 5):
+        for attempt in range(max_retries):
+            try:
+                self._client = chromadb.HttpClient(
+                    host=host,
+                    port=port,
+                    settings=Settings(
+                        anonymized_telemetry=False,
+                        allow_reset=True,
+                    ),
+                )
+                # Test connection by listing collections
+                self._client.list_collections()
+                logger.info(f"Connected to ChromaDB at {host}:{port}")
+                return
+            except Exception as e:
+                if attempt < max_retries - 1:
+                    logger.warning(f"ChromaDB connection attempt {attempt + 1} failed: {e}. Retrying in 2s...")
+                    time.sleep(2)
+                else:
+                    logger.warning(f"Could not connect to ChromaDB after {max_retries} attempts: {e}. Using in-memory client.")
+                    self._client = chromadb.Client(Settings(anonymized_telemetry=False))
 
     @property
     def client(self) -> chromadb.ClientAPI:
@@ -40,6 +52,38 @@ class ChromaClient:
 
     def get_bookings_collection(self):
         return self.get_or_create_collection("bookings")
+
+    def get_destinations_collection(self):
+        return self.get_or_create_collection("destinations")
+
+    def add_destination_docs(self, docs: list[dict]):
+        """Add destination knowledge documents to the collection."""
+        collection = self.get_destinations_collection()
+        for doc in docs:
+            collection.upsert(
+                ids=[doc["id"]],
+                documents=[doc["content"]],
+                metadatas=[{
+                    "destination": doc.get("destination", ""),
+                    "category": doc.get("category", "general"),
+                    "title": doc.get("title", ""),
+                }],
+            )
+        logger.info(f"Added {len(docs)} destination documents")
+
+    def query_destinations(self, query: str, destination: str = None, n_results: int = 5):
+        collection = self.get_destinations_collection()
+        try:
+            where_filter = {"destination": destination} if destination else None
+            results = collection.query(
+                query_texts=[query],
+                n_results=n_results,
+                where=where_filter,
+            )
+            return results
+        except Exception as e:
+            logger.error(f"Error querying destinations: {e}")
+            return {"documents": [], "metadatas": []}
 
     def add_conversation(self, session_id: str, messages: list[dict]):
         collection = self.get_conversations_collection()

@@ -60,7 +60,7 @@ def create_travel_graph() -> StateGraph:
         "itinerary_planner",
         should_continue_itinerary,
         {
-            "booking_agent": END,  # Wait for user to review
+            "booking_agent": "booking_agent",
             "itinerary_planner": END,
         }
     )

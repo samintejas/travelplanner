@@ -5,6 +5,7 @@ import operator
 
 class TravelPreferences(TypedDict, total=False):
     destination: str
+    country: str
     departure_city: str
     start_date: str
     end_date: str

@@ -59,3 +59,24 @@ class TravelRetriever:
                     role = metadata.get("role", "unknown")
                     context_parts.append(f"{role}: {doc}")
         return "\n".join(context_parts)
+
+    def retrieve_destination_info(
+        self, destination: str, query: str = None, n_results: int = 5
+    ) -> List[Dict[str, Any]]:
+        """Retrieve knowledge about a specific destination."""
+        search_query = query or f"travel guide {destination}"
+        results = self.chroma.query_destinations(search_query, destination.lower(), n_results)
+        documents = []
+        if results.get("documents") and results["documents"][0]:
+            for i, doc in enumerate(results["documents"][0]):
+                metadata = (
+                    results["metadatas"][0][i]
+                    if results.get("metadatas") and results["metadatas"][0]
+                    else {}
+                )
+                documents.append({
+                    "content": doc,
+                    "category": metadata.get("category", ""),
+                    "title": metadata.get("title", ""),
+                })
+        return documents

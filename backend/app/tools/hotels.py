@@ -15,6 +15,9 @@ HOTEL_CHAINS = [
     {"name": "Best Western", "base_price": 100, "rating": 3.5},
     {"name": "Ritz-Carlton", "base_price": 500, "rating": 4.9},
     {"name": "InterContinental", "base_price": 280, "rating": 4.6},
+    {"name": "APA Hotel", "base_price": 80, "rating": 3.6},
+    {"name": "Prince Hotel", "base_price": 180, "rating": 4.2},
+    {"name": "Ryokan Kurashiki", "base_price": 350, "rating": 4.7},
 ]
 
 AMENITIES_POOL = [
@@ -27,6 +30,8 @@ CITY_MULTIPLIERS = {
     "Paris": 1.3,
     "London": 1.4,
     "Tokyo": 1.2,
+    "Kyoto": 1.3,
+    "Osaka": 1.1,
     "New York": 1.5,
     "Los Angeles": 1.1,
     "Miami": 1.0,

@@ -6,18 +6,24 @@ from langchain.tools import tool
 from pydantic import BaseModel, Field
 
 
-AIRLINES = ["United Airlines", "Delta", "American Airlines", "JetBlue", "Southwest", "Air France", "British Airways", "Lufthansa"]
+AIRLINES = ["United Airlines", "Delta", "American Airlines", "JetBlue", "Southwest", "Air France", "British Airways", "Lufthansa", "ANA", "JAL"]
 MOCK_ROUTES = {
     ("New York", "Paris"): {"base_price": 450, "duration_hours": 7.5},
     ("New York", "London"): {"base_price": 400, "duration_hours": 7},
     ("New York", "Tokyo"): {"base_price": 850, "duration_hours": 14},
+    ("New York", "Osaka"): {"base_price": 900, "duration_hours": 14.5},
     ("Los Angeles", "Paris"): {"base_price": 550, "duration_hours": 11},
     ("Los Angeles", "Tokyo"): {"base_price": 650, "duration_hours": 11.5},
+    ("Los Angeles", "Osaka"): {"base_price": 680, "duration_hours": 12},
+    ("Los Angeles", "Kyoto"): {"base_price": 700, "duration_hours": 12.5},
     ("Chicago", "London"): {"base_price": 480, "duration_hours": 8},
+    ("Chicago", "Tokyo"): {"base_price": 780, "duration_hours": 13},
     ("San Francisco", "Tokyo"): {"base_price": 600, "duration_hours": 11},
+    ("San Francisco", "Osaka"): {"base_price": 620, "duration_hours": 11.5},
     ("Miami", "Paris"): {"base_price": 520, "duration_hours": 9},
     ("Boston", "London"): {"base_price": 380, "duration_hours": 6.5},
     ("Seattle", "Tokyo"): {"base_price": 580, "duration_hours": 10},
+    ("Seattle", "Osaka"): {"base_price": 600, "duration_hours": 10.5},
 }
 
 

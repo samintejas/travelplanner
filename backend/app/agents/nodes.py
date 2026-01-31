@@ -42,11 +42,13 @@ Respond naturally to the user's message."""),
 ])
 
 ITINERARY_PROMPT = ChatPromptTemplate.from_messages([
-    ("system", """You are a travel itinerary planner. Based on the user's preferences and available options,
-create a personalized travel itinerary.
+    ("system", """You are an expert travel itinerary planner with deep knowledge of destinations worldwide.
+Based on the user's preferences and available options, create a personalized travel itinerary.
 
 User preferences:
 {preferences}
+
+{destination_knowledge}
 
 Available flights:
 {flights}
@@ -58,7 +60,9 @@ Available activities:
 {activities}
 
 Create a detailed day-by-day itinerary that fits their preferences and budget.
-Be specific about times, locations, and recommendations.
+Include your knowledge about the destination - local tips, best times to visit attractions,
+cultural etiquette, must-try foods, and insider recommendations.
+Be specific about times, locations, and practical advice.
 At the end, provide a summary with total estimated cost.
 
 End your response with [ITINERARY_READY] when you've presented the full itinerary."""),
@@ -109,6 +113,15 @@ def preference_collector(state: TravelState) -> Dict[str, Any]:
         preferences["destination"] = "London"
     elif "tokyo" in last_message:
         preferences["destination"] = "Tokyo"
+    elif "japan" in last_message:
+        preferences["destination"] = "Tokyo"
+        preferences["country"] = "Japan"
+    elif "kyoto" in last_message:
+        preferences["destination"] = "Kyoto"
+        preferences["country"] = "Japan"
+    elif "osaka" in last_message:
+        preferences["destination"] = "Osaka"
+        preferences["country"] = "Japan"
     elif "rome" in last_message:
         preferences["destination"] = "Rome"
     elif "barcelona" in last_message:
@@ -136,6 +149,7 @@ def itinerary_planner(state: TravelState) -> Dict[str, Any]:
     departure_city = preferences.get("departure_city", "New York")
     start_date = preferences.get("start_date", "2025-06-01")
     end_date = preferences.get("end_date", "2025-06-07")
+    country = preferences.get("country", "")
 
     flights_data = FlightSearchTool.search(
         departure_city=departure_city,
@@ -152,6 +166,26 @@ def itinerary_planner(state: TravelState) -> Dict[str, Any]:
 
     activities_data = ActivitySearchTool.search(city=destination)
 
+    # Retrieve destination knowledge from RAG if available
+    destination_knowledge = ""
+    try:
+        from ..rag.chroma_client import ChromaClient
+        from ..rag.retriever import TravelRetriever
+        chroma = ChromaClient()
+        retriever = TravelRetriever(chroma)
+        search_term = country.lower() if country else destination.lower()
+        docs = retriever.retrieve_destination_info(search_term, n_results=5)
+        if docs:
+            destination_knowledge = "Destination Knowledge:\n" + "\n\n".join(
+                f"**{d['title']}**: {d['content']}" for d in docs
+            )
+    except Exception as e:
+        logger.debug(f"Could not retrieve destination docs: {e}")
+        destination_knowledge = f"Use your knowledge about {destination} to provide local tips and recommendations."
+
+    if not destination_knowledge:
+        destination_knowledge = f"Use your knowledge about {destination} to provide local tips, cultural insights, and recommendations."
+
     # Format for LLM
     flights_str = json.dumps(flights_data, indent=2, default=str)
     hotels_str = json.dumps(hotels_data[:3], indent=2, default=str)
@@ -162,6 +196,7 @@ def itinerary_planner(state: TravelState) -> Dict[str, Any]:
 
     response = chain.invoke({
         "preferences": json.dumps(preferences, indent=2),
+        "destination_knowledge": destination_knowledge,
         "flights": flights_str,
         "hotels": hotels_str,
         "activities": activities_str,
