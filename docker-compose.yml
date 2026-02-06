@@ -43,8 +43,18 @@ services:
         condition: service_healthy
       chromadb:
         condition: service_started
-    volumes:
-      - ./frontend:/app/frontend
+
+  frontend:
+    build:
+      context: ./frontend-next
+      dockerfile: Dockerfile
+    container_name: travel-frontend
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
 
 volumes:
   postgres_data:
