@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Travel Concierge</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .modal-header h2 {
+            font-size: 20px;
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 24px;
+            cursor: pointer;
+        }
+        .modal-close:hover {
+            color: var(--text-primary);
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            font-size: 14px;
+        }
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+        .modal-actions button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+        .btn-primary {
+            background: var(--success);
+            color: white;
+        }
+        .btn-secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+        .booking-ref {
+            background: var(--accent);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 12px;
+            margin-top: 8px;
+        }
+        .booking-ref-id {
+            font-family: monospace;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">Travel<span>Concierge</span></div>
+        <nav>
+            <a href="index.html" class="active">Customer</a>
+            <a href="admin.html">Admin</a>
+        </nav>
+    </header>
+
+    <div class="chat-container">
+        <div class="chat-main">
+            <div class="messages" id="messages">
+                <!-- Messages will be inserted here -->
+            </div>
+            <div class="input-area">
+                <input type="text" id="messageInput" placeholder="Tell me about your dream trip anywhere in the world..." autofocus>
+                <button id="sendBtn" onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <div class="sidebar-card">
+                <h3>Your Preferences</h3>
+                <div id="preferences">
+                    <div class="preference-item">
+                        <span class="preference-label">Destination</span>
+                        <span class="preference-value" id="pref-destination">-</span>
+                    </div>
+                    <div class="preference-item">
+                        <span class="preference-label">Origin</span>
+                        <span class="preference-value" id="pref-origin">-</span>
+                    </div>
+                    <div class="preference-item">
+                        <span class="preference-label">Dates</span>
+                        <span class="preference-value" id="pref-dates">-</span>
+                    </div>
+                    <div class="preference-item">
+                        <span class="preference-label">Budget</span>
+                        <span class="preference-value" id="pref-budget">-</span>
+                    </div>
+                    <div class="preference-item">
+                        <span class="preference-label">Style</span>
+                        <span class="preference-value" id="pref-style">-</span>
+                    </div>
+                </div>
+                <div class="quick-actions">
+                    <span class="quick-action" onclick="quickAction('Show me flights')">Flights</span>
+                    <span class="quick-action" onclick="quickAction('Show me hotels')">Hotels</span>
+                    <span class="quick-action" onclick="quickAction('What activities are available?')">Activities</span>
+                    <span class="quick-action" onclick="quickAction('Give me travel tips')">Tips</span>
+                </div>
+            </div>
+
+            <div class="sidebar-card">
+                <h3>Your Itinerary</h3>
+                <div id="itinerary-items">
+                    <div class="empty-state">No items yet</div>
+                </div>
+                <div class="total-cost" id="total-cost" style="display: none;">
+                    Total: $<span id="cost-value">0</span>
+                </div>
+                <button class="confirm-btn" id="confirm-btn" onclick="confirmBooking()" style="display: none;">
+                    Confirm Booking
+                </button>
+                <div class="confirmed-badge" id="confirmed-badge" style="display: none;">
+                    Booking Confirmed!
+                </div>
+                <div class="booking-ref" id="booking-ref" style="display: none;">
+                    Reference: <span class="booking-ref-id" id="booking-ref-id"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div class="modal" id="confirm-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Confirm Your Booking</h2>
+                <button class="modal-close" onclick="closeConfirmModal()">&times;</button>
+            </div>
+
+            <div id="booking-summary">
+                <!-- Will be populated by JS -->
+            </div>
+
+            <hr style="border: none; border-top: 1px solid var(--border); margin: 20px 0;">
+
+            <h4 style="margin-bottom: 16px;">Your Contact Information</h4>
+
+            <div class="form-group">
+                <label for="customer-email">Email Address *</label>
+                <input type="email" id="customer-email" placeholder="your@email.com" required>
+            </div>
+
+            <div class="form-group">
+                <label for="customer-name">Full Name</label>
+                <input type="text" id="customer-name" placeholder="John Doe">
+            </div>
+
+            <div class="form-group">
+                <label for="customer-phone">Phone Number</label>
+                <input type="tel" id="customer-phone" placeholder="+1 234 567 8900">
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn-secondary" onclick="closeConfirmModal()">Cancel</button>
+                <button class="btn-primary" onclick="submitBooking()">Confirm Booking</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

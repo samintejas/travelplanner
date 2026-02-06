@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Travel Concierge</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .admin-tabs {
+            display: flex;
+            gap: 0;
+            background: var(--bg-tertiary);
+            border-bottom: 1px solid var(--border);
+        }
+        .admin-tab {
+            padding: 12px 24px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            color: var(--text-secondary);
+            font-size: 14px;
+            border-bottom: 2px solid transparent;
+        }
+        .admin-tab:hover {
+            color: var(--text-primary);
+        }
+        .admin-tab.active {
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+        .tab-content {
+            display: none;
+            height: calc(100vh - 180px);
+            overflow-y: auto;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .booking-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+        }
+        .booking-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+        .booking-id {
+            font-family: monospace;
+            font-size: 14px;
+            color: var(--accent);
+        }
+        .booking-status {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .booking-status.confirmed { background: var(--success); color: white; }
+        .booking-status.processing { background: #f59e0b; color: white; }
+        .booking-status.completed { background: #6366f1; color: white; }
+        .booking-status.cancelled { background: #ef4444; color: white; }
+        .booking-customer {
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+        .booking-customer h4 {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 4px;
+        }
+        .booking-items {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+        }
+        .booking-item {
+            background: var(--bg-secondary);
+            padding: 12px;
+            border-radius: 8px;
+        }
+        .booking-item-type {
+            font-size: 11px;
+            color: var(--accent);
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        .booking-item-name {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+        .booking-item-detail {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        .booking-total {
+            text-align: right;
+            font-size: 18px;
+            font-weight: 600;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border);
+        }
+        .booking-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .booking-actions button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .btn-view { background: var(--accent); color: white; }
+        .btn-complete { background: var(--success); color: white; }
+        .btn-cancel { background: #ef4444; color: white; }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 16px;
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 32px;
+            font-weight: 600;
+            color: var(--accent);
+        }
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+        .no-bookings {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo">Travel<span>Concierge</span> Admin</div>
+        <nav>
+            <a href="index.html">Customer View</a>
+            <a href="admin.html" class="active">Admin Dashboard</a>
+        </nav>
+    </header>
+
+    <div class="container" style="padding: 20px;">
+        <div class="admin-tabs">
+            <button class="admin-tab active" onclick="showTab('bookings')">Confirmed Bookings</button>
+            <button class="admin-tab" onclick="showTab('sessions')">Active Sessions</button>
+            <button class="admin-tab" onclick="showTab('notifications')">Notifications <span id="notif-badge"></span></button>
+        </div>
+
+        <!-- Bookings Tab -->
+        <div id="bookings-tab" class="tab-content active" style="padding: 20px;">
+            <div class="stats-grid" id="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-total">0</div>
+                    <div class="stat-label">Total Bookings</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-confirmed">0</div>
+                    <div class="stat-label">Confirmed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-revenue">$0</div>
+                    <div class="stat-label">Total Revenue</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-today">0</div>
+                    <div class="stat-label">Today</div>
+                </div>
+            </div>
+            <div id="bookings-list">
+                <div class="no-bookings">No confirmed bookings yet</div>
+            </div>
+        </div>
+
+        <!-- Sessions Tab -->
+        <div id="sessions-tab" class="tab-content" style="padding: 20px;">
+            <div class="admin-grid" style="height: auto;">
+                <div class="sessions-list" id="sessions-list-container">
+                    <div class="sessions-header">Active Sessions</div>
+                    <div id="sessions"></div>
+                </div>
+                <div class="session-details" id="session-details">
+                    <div class="details-header">
+                        <h3 id="details-title">Select a session</h3>
+                    </div>
+                    <div class="details-content" id="details-content">
+                        <div class="empty-state">Select a session to view details</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Notifications Tab -->
+        <div id="notifications-tab" class="tab-content" style="padding: 20px;">
+            <h3 style="margin-bottom: 16px;">Recent Notifications</h3>
+            <div id="notifications-list">
+                <div class="no-bookings">No notifications</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000/api';
+        let currentSessionId = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadBookings();
+            loadSessions();
+            loadNotifications();
+            setInterval(() => {
+                loadBookings();
+                loadSessions();
+                loadNotifications();
+            }, 5000);
+        });
+
+        function showTab(tabName) {
+            document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelector(`[onclick="showTab('${tabName}')"]`).classList.add('active');
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+        }
+
+        async function loadBookings() {
+            try {
+                const response = await fetch(`${API_URL}/admin/bookings`);
+                const data = await response.json();
+                renderBookings(data.bookings);
+                updateStats(data.bookings);
+            } catch (error) {
+                console.error('Failed to load bookings:', error);
+            }
+        }
+
+        function updateStats(bookings) {
+            const total = bookings.length;
+            const confirmed = bookings.filter(b => b.status === 'confirmed').length;
+            const revenue = bookings.reduce((sum, b) => sum + (b.itinerary?.total_cost || 0), 0);
+            const today = bookings.filter(b => {
+                const date = new Date(b.timestamp).toDateString();
+                return date === new Date().toDateString();
+            }).length;
+
+            document.getElementById('stat-total').textContent = total;
+            document.getElementById('stat-confirmed').textContent = confirmed;
+            document.getElementById('stat-revenue').textContent = `$${revenue.toFixed(0)}`;
+            document.getElementById('stat-today').textContent = today;
+        }
+
+        function renderBookings(bookings) {
+            const container = document.getElementById('bookings-list');
+
+            if (!bookings || bookings.length === 0) {
+                container.innerHTML = '<div class="no-bookings">No confirmed bookings yet</div>';
+                return;
+            }
+
+            container.innerHTML = bookings.map(booking => `
+                <div class="booking-card">
+                    <div class="booking-header">
+                        <div>
+                            <span class="booking-id">${booking.booking_id}</span>
+                            <span style="margin-left: 12px; color: var(--text-secondary);">
+                                ${new Date(booking.timestamp).toLocaleString()}
+                            </span>
+                        </div>
+                        <span class="booking-status ${booking.status}">${booking.status}</span>
+                    </div>
+
+                    <div class="booking-customer">
+                        <h4>Customer</h4>
+                        ${booking.customer_info ? `
+                            <div><strong>${booking.customer_info.name || 'N/A'}</strong></div>
+                            <div>${booking.customer_info.email || 'No email'}</div>
+                            <div>${booking.customer_info.phone || ''}</div>
+                        ` : '<div style="color: var(--text-secondary);">No customer info provided</div>'}
+                    </div>
+
+                    <div style="margin-bottom: 12px;">
+                        <strong>Destination:</strong> ${booking.preferences?.destination || 'N/A'}
+                    </div>
+
+                    <div class="booking-items">
+                        ${(booking.itinerary?.flights || []).map(f => `
+                            <div class="booking-item">
+                                <div class="booking-item-type">Flight</div>
+                                <div class="booking-item-name">${f.airline}</div>
+                                <div class="booking-item-detail">${f.from} → ${f.to}</div>
+                                <div class="booking-item-detail">${f.departure}</div>
+                                <div class="booking-item-detail"><strong>$${f.price}</strong></div>
+                            </div>
+                        `).join('')}
+
+                        ${(booking.itinerary?.hotels || []).map(h => `
+                            <div class="booking-item">
+                                <div class="booking-item-type">Hotel</div>
+                                <div class="booking-item-name">${h.name}</div>
+                                <div class="booking-item-detail">${h.city}</div>
+                                <div class="booking-item-detail">Rating: ${h.rating} stars</div>
+                                <div class="booking-item-detail"><strong>$${h.price_per_night}/night</strong></div>
+                            </div>
+                        `).join('')}
+
+                        ${(booking.itinerary?.activities || []).map(a => `
+                            <div class="booking-item">
+                                <div class="booking-item-type">Activity</div>
+                                <div class="booking-item-name">${a.name}</div>
+                                <div class="booking-item-detail">${a.city}</div>
+                                <div class="booking-item-detail">${a.duration}</div>
+                                <div class="booking-item-detail"><strong>$${a.price}</strong></div>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <div class="booking-total">
+                        Total: $${booking.itinerary?.total_cost?.toFixed(2) || '0.00'}
+                    </div>
+
+                    <div class="booking-actions">
+                        <button class="btn-view" onclick="viewBookingChat('${booking.booking_id}')">View Chat</button>
+                        ${booking.status === 'confirmed' ? `
+                            <button class="btn-complete" onclick="updateBookingStatus('${booking.booking_id}', 'completed')">Mark Completed</button>
+                        ` : ''}
+                        ${booking.status !== 'cancelled' ? `
+                            <button class="btn-cancel" onclick="updateBookingStatus('${booking.booking_id}', 'cancelled')">Cancel</button>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function updateBookingStatus(bookingId, status) {
+            try {
+                await fetch(`${API_URL}/admin/booking/${bookingId}?status=${status}`, {
+                    method: 'PATCH'
+                });
+                loadBookings();
+            } catch (error) {
+                console.error('Failed to update booking:', error);
+            }
+        }
+
+        async function viewBookingChat(bookingId) {
+            try {
+                const response = await fetch(`${API_URL}/admin/booking/${bookingId}`);
+                const booking = await response.json();
+
+                alert(`Chat History for ${bookingId}:\n\n${booking.chat_history.map(m =>
+                    `${m.role.toUpperCase()}: ${m.content.substring(0, 100)}...`
+                ).join('\n\n')}`);
+            } catch (error) {
+                console.error('Failed to load booking:', error);
+            }
+        }
+
+        async function loadSessions() {
+            try {
+                const response = await fetch(`${API_URL}/admin/sessions`);
+                const data = await response.json();
+                renderSessions(data.sessions);
+            } catch (error) {
+                console.error('Failed to load sessions:', error);
+            }
+        }
+
+        function renderSessions(sessions) {
+            const container = document.getElementById('sessions');
+            if (!sessions || sessions.length === 0) {
+                container.innerHTML = '<div class="empty-state">No sessions yet</div>';
+                return;
+            }
+
+            container.innerHTML = sessions.map(session => `
+                <div class="session-item ${session.id === currentSessionId ? 'active' : ''}"
+                     onclick="loadSessionDetails('${session.id}')">
+                    <div class="destination">
+                        ${session.destination || 'No destination'}
+                        <span class="status ${session.confirmed ? 'confirmed' : 'pending'}">
+                            ${session.confirmed ? 'Confirmed' : 'In Progress'}
+                        </span>
+                    </div>
+                    <div class="meta">${session.message_count} messages</div>
+                </div>
+            `).join('');
+        }
+
+        async function loadSessionDetails(sessionId) {
+            currentSessionId = sessionId;
+            try {
+                const response = await fetch(`${API_URL}/admin/session/${sessionId}`);
+                const session = await response.json();
+
+                document.getElementById('details-title').textContent =
+                    `Session: ${session.preferences.destination || 'No destination'} (${session.id})`;
+
+                document.getElementById('details-content').innerHTML = `
+                    <div class="detail-section">
+                        <h4>Preferences</h4>
+                        <div class="preference-item">
+                            <span class="preference-label">Destination</span>
+                            <span class="preference-value">${session.preferences.destination || '-'}</span>
+                        </div>
+                        <div class="preference-item">
+                            <span class="preference-label">Budget</span>
+                            <span class="preference-value">${session.preferences.budget ? '$' + session.preferences.budget : '-'}</span>
+                        </div>
+                    </div>
+                    <div class="detail-section">
+                        <h4>Chat History</h4>
+                        ${session.chat_history.map(msg => `
+                            <div class="chat-message">
+                                <div class="role">${msg.role}</div>
+                                <div>${msg.content.substring(0, 200)}${msg.content.length > 200 ? '...' : ''}</div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } catch (error) {
+                console.error('Failed to load session:', error);
+            }
+        }
+
+        async function loadNotifications() {
+            try {
+                const response = await fetch(`${API_URL}/admin/notifications`);
+                const data = await response.json();
+
+                const badge = document.getElementById('notif-badge');
+                if (data.notifications.length > 0) {
+                    badge.innerHTML = `<span class="notifications-badge">${data.notifications.length}</span>`;
+                } else {
+                    badge.innerHTML = '';
+                }
+
+                const container = document.getElementById('notifications-list');
+                if (!data.notifications || data.notifications.length === 0) {
+                    container.innerHTML = '<div class="no-bookings">No notifications</div>';
+                    return;
+                }
+
+                container.innerHTML = data.notifications.map(n => `
+                    <div class="booking-card">
+                        <div class="booking-header">
+                            <span class="booking-id">${n.booking_id || n.session_id}</span>
+                            <span style="color: var(--text-secondary);">
+                                ${new Date(n.timestamp).toLocaleString()}
+                            </span>
+                        </div>
+                        <div><strong>Destination:</strong> ${n.preferences?.destination || 'N/A'}</div>
+                        <div><strong>Total:</strong> $${n.itinerary?.total_cost?.toFixed(2) || '0'}</div>
+                        <div style="margin-top: 8px; color: var(--text-secondary);">${n.chat_summary}</div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                console.error('Failed to load notifications:', error);
+            }
+        }
+    </script>
+</body>
+</html>
