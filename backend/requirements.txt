@@ -4,3 +4,9 @@ pydantic
 openai
 numpy
 duckduckgo-search
+# Database
+sqlalchemy
+psycopg2-binary
+alembic
+# ChromaDB
+chromadb

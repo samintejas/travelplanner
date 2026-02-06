@@ -15,3 +15,7 @@ venv/
 
 # OS
 .DS_Store
+
+# Docker
+postgres_data/
+chroma_data/
