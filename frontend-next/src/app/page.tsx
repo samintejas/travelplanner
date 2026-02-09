@@ -1,235 +1,124 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
-import { Send, Loader2 } from 'lucide-react';
-import ChatMessage from '@/components/ChatMessage';
-import Sidebar from '@/components/Sidebar';
-import ConfirmModal from '@/components/ConfirmModal';
-import {
-  sendMessage,
-  addToItinerary,
-  getItinerary,
-  saveCustomerInfo,
-  type ChatResponse,
-  type Preferences,
-  type Itinerary,
-} from '@/lib/api';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Plane, MapPin, Globe, Star, ArrowRight } from 'lucide-react';
+import { useAuth } from '@/lib/auth';
 
-interface Message {
-  role: 'user' | 'assistant';
-  content: string;
-}
-
-const initialPreferences: Preferences = {
-  destination: null,
-  origin: null,
-  start_date: null,
-  end_date: null,
-  budget: null,
-  travel_style: null,
-};
-
-const initialItinerary: Itinerary = {
-  flights: [],
-  hotels: [],
-  activities: [],
-  total_cost: 0,
-  confirmed: false,
-};
-
-export default function Home() {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      role: 'assistant',
-      content:
-        "Welcome to Travel Concierge! I'm here to help you plan your perfect trip to **anywhere in the world**.\n\nTell me where you'd like to go, your budget, and travel dates, and I'll help you find flights, hotels, and activities.\n\nTry asking: \"I want to plan a trip to Japan\" or \"Help me visit Paris\"",
-    },
-  ]);
-  const [input, setInput] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [sessionId, setSessionId] = useState<string | null>(null);
-  const [bookingId, setBookingId] = useState<string | null>(null);
-  const [preferences, setPreferences] = useState<Preferences>(initialPreferences);
-  const [itinerary, setItinerary] = useState<Itinerary>(initialItinerary);
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
+export default function LandingPage() {
+  const { isAuthenticated } = useAuth();
+  const router = useRouter();
 
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
-  const handleSend = async () => {
-    if (!input.trim() || loading) return;
-
-    const userMessage = input.trim();
-    setInput('');
-    setMessages((prev) => [...prev, { role: 'user', content: userMessage }]);
-    setLoading(true);
-
-    try {
-      const response = await sendMessage(userMessage, sessionId || undefined);
-      setSessionId(response.session_id);
-      setPreferences(response.preferences);
-
-      if (response.confirmed && response.booking_id) {
-        setBookingId(response.booking_id);
-      }
-
-      setMessages((prev) => [
-        ...prev,
-        { role: 'assistant', content: response.response },
-      ]);
-
-      // Refresh itinerary
-      if (response.session_id) {
-        const itin = await getItinerary(response.session_id);
-        setItinerary(itin);
-      }
-    } catch (error) {
-      console.error('Error:', error);
-      setMessages((prev) => [
-        ...prev,
-        { role: 'assistant', content: 'Sorry, something went wrong. Please try again.' },
-      ]);
+    if (isAuthenticated) {
+      router.push('/chat');
     }
-
-    setLoading(false);
-  };
-
-  const handleAddItem = async (type: string, id: string) => {
-    if (!sessionId) return;
-
-    try {
-      await addToItinerary(sessionId, type, id);
-      const itin = await getItinerary(sessionId);
-      setItinerary(itin);
-      setMessages((prev) => [
-        ...prev,
-        { role: 'assistant', content: `Added ${id} to your itinerary!` },
-      ]);
-    } catch (error) {
-      console.error('Error adding item:', error);
-    }
-  };
-
-  const handleConfirm = async (email: string, name?: string, phone?: string) => {
-    if (!sessionId) return;
-
-    try {
-      await saveCustomerInfo(sessionId, email, name, phone);
-      setShowConfirmModal(false);
-
-      // Send confirmation message
-      setMessages((prev) => [
-        ...prev,
-        { role: 'user', content: 'Please confirm my booking' },
-      ]);
-      setLoading(true);
-
-      const response = await sendMessage('Please confirm my booking', sessionId);
-      setMessages((prev) => [
-        ...prev,
-        { role: 'assistant', content: response.response },
-      ]);
-
-      if (response.booking_id) {
-        setBookingId(response.booking_id);
-      }
-
-      const itin = await getItinerary(sessionId);
-      setItinerary(itin);
-    } catch (error) {
-      console.error('Error confirming:', error);
-    }
-
-    setLoading(false);
-  };
+  }, [isAuthenticated, router]);
 
   return (
-    <div className="h-screen flex flex-col bg-background">
+    <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="flex items-center justify-between px-6 py-4 border-b border-border bg-card">
         <div className="text-xl font-semibold">
           Travel<span className="text-accent">Concierge</span>
         </div>
-        <nav className="flex gap-4">
-          <a href="/" className="text-white">
-            Customer
+        <div className="flex items-center gap-4">
+          <a
+            href="/login"
+            className="px-4 py-2 text-muted hover:text-white transition-colors"
+          >
+            Sign In
           </a>
-          <a href="/admin" className="text-muted hover:text-white transition-colors">
-            Admin
+          <a
+            href="/login"
+            className="px-5 py-2 bg-accent hover:bg-accent-hover text-white rounded-lg font-medium transition-colors"
+          >
+            Get Started
           </a>
-        </nav>
+        </div>
       </header>
 
-      {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Chat Area */}
-        <div className="flex-1 flex flex-col">
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
-            {messages.map((msg, idx) => (
-              <ChatMessage
-                key={idx}
-                role={msg.role}
-                content={msg.content}
-                onAddItem={msg.role === 'assistant' ? handleAddItem : undefined}
-              />
-            ))}
-            {loading && (
-              <div className="flex items-center gap-2 text-muted">
-                <Loader2 className="animate-spin" size={20} />
-                <span>Thinking...</span>
-              </div>
-            )}
-            <div ref={messagesEndRef} />
+      {/* Hero Section */}
+      <div className="max-w-6xl mx-auto px-6 py-20">
+        <div className="text-center mb-16">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-accent/10 border border-accent/20 rounded-full text-accent text-sm mb-6">
+            <Star size={16} />
+            AI-Powered Travel Planning
           </div>
+          <h1 className="text-5xl md:text-6xl font-bold mb-6">
+            Plan Your Perfect Trip<br />
+            <span className="text-accent">Anywhere in the World</span>
+          </h1>
+          <p className="text-xl text-muted max-w-2xl mx-auto mb-8">
+            Your personal AI travel assistant helps you discover flights, hotels, and activities.
+            Just tell us where you want to go, and we'll handle the rest.
+          </p>
+          <a
+            href="/login"
+            className="inline-flex items-center gap-2 px-8 py-4 bg-accent hover:bg-accent-hover text-white rounded-xl font-semibold text-lg transition-all hover:scale-105"
+          >
+            Start Planning
+            <ArrowRight size={20} />
+          </a>
+        </div>
 
-          {/* Input */}
-          <div className="p-4 border-t border-border bg-card">
-            <div className="flex gap-3">
-              <input
-                type="text"
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-                placeholder="Tell me about your dream trip..."
-                className="flex-1 px-4 py-3 bg-card-hover border border-border rounded-xl focus:outline-none focus:border-accent"
-              />
-              <button
-                onClick={handleSend}
-                disabled={loading || !input.trim()}
-                className="px-6 py-3 bg-accent hover:bg-accent-hover text-white rounded-xl font-medium transition-colors disabled:opacity-50"
-              >
-                <Send size={20} />
-              </button>
+        {/* Features */}
+        <div className="grid md:grid-cols-3 gap-8 mb-20">
+          <div className="bg-card border border-border rounded-2xl p-6 text-center">
+            <div className="w-14 h-14 bg-blue-500/20 rounded-xl flex items-center justify-center mx-auto mb-4">
+              <Plane className="text-blue-500" size={28} />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">Find Flights</h3>
+            <p className="text-muted text-sm">
+              Compare flight options and prices from multiple airlines to any destination.
+            </p>
+          </div>
+          <div className="bg-card border border-border rounded-2xl p-6 text-center">
+            <div className="w-14 h-14 bg-purple-500/20 rounded-xl flex items-center justify-center mx-auto mb-4">
+              <MapPin className="text-purple-500" size={28} />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">Book Hotels</h3>
+            <p className="text-muted text-sm">
+              Discover the perfect accommodations that match your style and budget.
+            </p>
+          </div>
+          <div className="bg-card border border-border rounded-2xl p-6 text-center">
+            <div className="w-14 h-14 bg-green-500/20 rounded-xl flex items-center justify-center mx-auto mb-4">
+              <Globe className="text-green-500" size={28} />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">Plan Activities</h3>
+            <p className="text-muted text-sm">
+              Get personalized activity recommendations and local experiences.
+            </p>
+          </div>
+        </div>
+
+        {/* How it works */}
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-8">How It Works</h2>
+          <div className="flex flex-col md:flex-row items-center justify-center gap-8">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 bg-accent rounded-full flex items-center justify-center font-bold">1</div>
+              <span>Sign up for free</span>
+            </div>
+            <div className="hidden md:block text-muted">→</div>
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 bg-accent rounded-full flex items-center justify-center font-bold">2</div>
+              <span>Tell us your dream trip</span>
+            </div>
+            <div className="hidden md:block text-muted">→</div>
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 bg-accent rounded-full flex items-center justify-center font-bold">3</div>
+              <span>Book with one click</span>
             </div>
           </div>
         </div>
-
-        {/* Sidebar */}
-        <div className="border-l border-border bg-card">
-          <Sidebar
-            preferences={preferences}
-            itinerary={itinerary}
-            bookingId={bookingId}
-            onConfirm={() => setShowConfirmModal(true)}
-          />
-        </div>
       </div>
 
-      {/* Confirm Modal */}
-      <ConfirmModal
-        isOpen={showConfirmModal}
-        onClose={() => setShowConfirmModal(false)}
-        onConfirm={handleConfirm}
-        itinerary={itinerary}
-      />
+      {/* Footer */}
+      <footer className="border-t border-border py-8 text-center text-muted text-sm">
+        <p>© 2025 TravelConcierge. AI-powered travel planning.</p>
+      </footer>
     </div>
   );
 }

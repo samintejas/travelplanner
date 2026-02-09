@@ -124,29 +124,32 @@ export default function Sidebar({
         {hasItems && (
           <>
             <div className="mt-4 pt-3 border-t border-border">
-              <div className="text-center text-xl font-bold">
-                Total: ${itinerary.total_cost.toFixed(2)}
+              <div className="text-center">
+                <span className="text-muted text-sm">Estimated Total</span>
+                <div className="text-2xl font-bold text-accent">
+                  ${itinerary.total_cost.toFixed(2)}
+                </div>
               </div>
             </div>
 
             {/* Confirm Button or Badge */}
             {itinerary.confirmed ? (
-              <div className="mt-3">
-                <div className="bg-success text-white text-center py-2 rounded-lg font-medium">
+              <div className="mt-4">
+                <div className="bg-success text-white text-center py-3 rounded-lg font-semibold text-lg">
                   Booking Confirmed!
                 </div>
                 {bookingId && (
-                  <div className="mt-2 bg-accent text-white text-center py-2 rounded-lg text-sm">
-                    Ref: <span className="font-mono font-bold">{bookingId}</span>
+                  <div className="mt-2 bg-accent/20 border border-accent text-accent text-center py-2 rounded-lg text-sm">
+                    Reference: <span className="font-mono font-bold">{bookingId}</span>
                   </div>
                 )}
               </div>
             ) : (
               <button
                 onClick={onConfirm}
-                className="mt-3 w-full bg-success hover:bg-success/90 text-white py-3 rounded-lg font-medium transition-colors"
+                className="mt-4 w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-xl font-bold text-lg transition-all shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-[0.98] border-2 border-green-500"
               >
-                Confirm Booking
+                Confirm & Book Trip
               </button>
             )}
           </>

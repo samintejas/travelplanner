@@ -45,6 +45,29 @@ export interface Itinerary {
   summary?: string;
 }
 
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: string;
+}
+
+export interface SessionInfo {
+  id: string;
+  created_at: string;
+  destination: string | null;
+  confirmed: boolean;
+  message_count: number;
+}
+
+export interface SessionDetails {
+  id: string;
+  created_at: string;
+  preferences: Preferences;
+  itinerary: Itinerary;
+  chat_history: ChatMessage[];
+  confirmed: boolean;
+}
+
 export interface Booking {
   booking_id: string;
   session_id: string;
@@ -97,9 +120,27 @@ export async function saveCustomerInfo(sessionId: string, email: string, name?: 
   return res.json();
 }
 
+export async function getSessions(): Promise<{ sessions: SessionInfo[] }> {
+  const res = await fetch(`${API_URL}/admin/sessions`);
+  if (!res.ok) throw new Error('Failed to get sessions');
+  return res.json();
+}
+
+export async function getSessionDetails(sessionId: string): Promise<SessionDetails> {
+  const res = await fetch(`${API_URL}/admin/session/${sessionId}`);
+  if (!res.ok) throw new Error('Failed to get session details');
+  return res.json();
+}
+
 export async function getBookings(): Promise<{ bookings: Booking[]; total: number }> {
   const res = await fetch(`${API_URL}/admin/bookings`);
   if (!res.ok) throw new Error('Failed to get bookings');
+  return res.json();
+}
+
+export async function getBookingDetails(bookingId: string): Promise<Booking & { chat_history: ChatMessage[] }> {
+  const res = await fetch(`${API_URL}/admin/booking/${bookingId}`);
+  if (!res.ok) throw new Error('Failed to get booking details');
   return res.json();
 }
 
